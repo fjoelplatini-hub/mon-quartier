@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil professionnel - Mon Quartier Cameroun</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f7f5;color:#222}
+.container{width:92%;max-width:900px;margin:0 auto}
+.header{background:#fff;border-bottom:1px solid #e5e5e5;padding:14px 0;position:sticky;top:0;z-index:100}
+.header .container{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.logo{font-weight:bold;color:#16513A;font-size:18px}
+nav a{margin-left:10px;text-decoration:none;color:#444;font-weight:600}
+.section{padding:24px 0}
+.card{
+  background:#fff;border-radius:16px;padding:20px;
+  box-shadow:0 4px 14px rgba(0,0,0,.06);margin-bottom:14px
+}
+.photo-wrap{text-align:center;margin-bottom:12px}
+.photo-wrap img{
+  width:140px;height:140px;border-radius:50%;object-fit:cover;border:4px solid #eee
+}
+.photo-placeholder{
+  width:140px;height:140px;border-radius:50%;margin:0 auto;
+  display:flex;align-items:center;justify-content:center;
+  background:#e8f0eb;color:#16513A;font-size:42px;font-weight:bold
+}
+h1{margin:0 0 8px;color:#16513A;text-align:center;font-size:24px}
+.badges{text-align:center;margin-bottom:10px}
+.badge{
+  display:inline-block;padding:4px 10px;border-radius:999px;
+  font-size:12px;font-weight:bold;margin:0 4px
+}
+.badge-ok{background:#e8f5e9;color:#176b24}
+.badge-premium{background:#fff3e0;color:#e65100}
+.meta{text-align:center;color:#555;margin:0 0 6px}
+.desc{color:#444;line-height:1.5}
+.actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.btn,.actions button,.actions a button{
+  border:0;background:#16513A;color:#fff;padding:12px 14px;
+  border-radius:10px;font-weight:bold;cursor:pointer
+}
+.btn-gris{background:#eceff1;color:#333}
+.btn-rouge{background:#c62828;color:#fff}
+.grid-info{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px
+}
+.info-box{background:#f7faf8;border-radius:12px;padding:12px}
+.info-box strong{display:block;color:#16513A;margin-bottom:4px}
+.msg{text-align:center;font-weight:bold;margin-top:10px;min-height:20px}
+.footer{background:#0f2f23;color:#fff;text-align:center;padding:18px 0;margin-top:10px}
+@media(max-width:700px){.grid-info{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">🏘️ Mon Quartier Cameroun</div>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="favoris.html">Favoris</a>
+      <a href="connexion.html">Connexion</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="section">
+    <div class="container" id="zoneProfil">
+      <div class="card">
+        <h1>Chargement du profil...</h1>
+        <p class="meta">Veuillez patienter</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">© 2026 Mon Quartier Cameroun</div>
+</footer>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+<script src="js/core/firebase.js"></script>
+<script>
+(function () {
+  try {
+    if (window.MQC_FIREBASE_CONFIG && typeof firebase !== "undefined") {
+      if (!firebase.apps.length) firebase.initializeApp(window.MQC_FIREBASE_CONFIG);
+      window.MQC_FIREBASE_PRET = true;
+    }
+  } catch (e) {
+    console.error(e);
+    window.MQC_FIREBASE_PRET = false;
+  }
+})();
+</script>
+
+<script src="js/core/database.js"></script>
+<script src="js/core/utils.js"></script>
+
+<script>
+(function () {
+  function $(id){ return document.getElementById(id); }
+
+  function echapper(t){
+    return String(t || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function lireFavorisIds(){
+    try{
+      var brut = localStorage.getItem("favoris");
+      var liste = brut ? JSON.parse(brut) : [];
+      if(!Array.isArray(liste)) return [];
+      return liste.map(function(x){
+        if(x && typeof x === "object") return String(x.id || "");
+        return String(x);
+      }).filter(Boolean);
+    }catch(e){
+      return [];
+    }
+  }
+
+  function estFavori(id){
+    return lireFavorisIds().indexOf(String(id)) !== -1;
+  }
+
+  function basculerFavori(id){
+    var liste = lireFavorisIds();
+    var sid = String(id);
+    var i = liste.indexOf(sid);
+    if(i >= 0) liste.splice(i, 1);
+    else liste.push(sid);
+    localStorage.setItem("favoris", JSON.stringify(liste));
+    return liste.indexOf(sid) !== -1;
+  }
+
+  function whatsapp(pro){
+    var tel = String(pro.whatsapp || pro.telephone || "").replace(/\D/g, "");
+    if(tel.length === 9) tel = "237" + tel;
+    return tel;
+  }
+
+  function trouverProLocal(id){
+    try{
+      var liste = [];
+      if(window.MQC_DATABASE && Array.isArray(MQC_DATABASE.professionnels)){
+        liste = MQC_DATABASE.professionnels;
+      } else {
+        liste = JSON.parse(localStorage.getItem("professionnels") || "[]");
+      }
+      if(!Array.isArray(liste)) return null;
+      for(var i = 0; i < liste.length; i++){
+        if(liste[i] && String(liste[i].id) === String(id)) return liste[i];
+      }
+    }catch(e){}
+    return null;
+  }
+
+  function chargerPro(id, callback){
+    // 1) Firestore par id document
+    if (window.MQC_FIREBASE_PRET && typeof firebase !== "undefined") {
+      var db = firebase.firestore();
+      db.collection("professionnels").doc(String(id)).get()
+        .then(function(doc){
+          if (doc.exists) {
+            var d = doc.data() || {};
+            d.id = d.id || doc.id;
+            callback(d);
+            return;
+          }
+          // parfois l'id est dans le champ et pas l'id doc
+          return db.collection("professionnels").where("id", "==", id).limit(1).get()
+            .then(function(snap){
+              if (!snap.empty) {
+                var d2 = snap.docs[0].data() || {};
+                d2.id = d2.id || snap.docs[0].id;
+                callback(d2);
+              } else {
+                callback(trouverProLocal(id));
+              }
+            });
+        })
+        .catch(function(err){
+          console.error(err);
+          callback(trouverProLocal(id));
+        });
+      return;
+    }
+    // 2) Local
+    callback(trouverProLocal(id));
+  }
+
+  function incrementerVues(pro){
+    try{
+      pro.vues = (Number(pro.vues) || 0) + 1;
+      if (window.MQC_FIREBASE_PRET && typeof firebase !== "undefined" && pro.id) {
+        firebase.firestore().collection("professionnels").doc(String(pro.id))
+          .set({ vues: pro.vues }, { merge: true })
+          .catch(function(e){ console.error(e); });
+      }
+    }catch(e){}
+  }
+
+  function afficherIntrouvable(){
+    var zone = $("zoneProfil");
+    if(!zone) return;
+    zone.innerHTML =
+      '<div class="card">' +
+        "<h1>❌ Professionnel introuvable</h1>" +
+        '<p class="meta">Ce profil n’existe pas ou n’est plus disponible.</p>' +
+        '<div class="actions">' +
+          '<a href="index.html"><button type="button">🏠 Retour à l’accueil</button></a>' +
+        "</div>" +
+      "</div>";
+  }
+
+  function afficherProfil(pro){
+    var zone = $("zoneProfil");
+    if(!zone) return;
+
+    var wa = whatsapp(pro);
+    var fav = estFavori(pro.id);
+    var photo = pro.photo || "";
+    var initiale = String(pro.nom || "?").charAt(0).toUpperCase();
+
+    var badges = "";
+    if(pro.verifie) badges += '<span class="badge badge-ok">✅ Vérifié</span>';
+    if(pro.premium) badges += '<span class="badge badge-premium">⭐ Premium</span>';
+
+    var itineraire = "";
+    if(pro.latitude && pro.longitude){
+      itineraire =
+        '<a href="https://www.google.com/maps/dir/?api=1&destination=' +
+        encodeURIComponent(pro.latitude + "," + pro.longitude) +
+        '" target="_blank" rel="noopener"><button type="button">🧭 Itinéraire</button></a>';
+    }
+
+    zone.innerHTML =
+      '<div class="card">' +
+        '<div class="photo-wrap">' +
+          (photo
+            ? '<img src="' + echapper(photo) + '" alt="Photo">'
+            : '<div class="photo-placeholder">' + echapper(initiale) + "</div>") +
+        "</div>" +
+        "<h1>" + echapper(pro.nom || "Professionnel") + "</h1>" +
+        '<div class="badges">' + badges + "</div>" +
+        '<p class="meta">💼 ' + echapper(pro.categorie || "Non renseigné") + "</p>" +
+        '<p class="meta">📍 ' + echapper(pro.quartier || "") +
+          (pro.ville ? ", " + echapper(pro.ville) : "") +
+        "</p>" +
+        '<div class="actions">' +
+          (wa
+            ? '<a href="https://wa.me/' + wa + '" target="_blank" rel="noopener"><button type="button">💬 WhatsApp</button></a>'
+            : "") +
+          (pro.telephone
+            ? '<a href="tel:' + echapper(pro.telephone) + '"><button type="button">📞 Appeler</button></a>'
+            : "") +
+          itineraire +
+          '<button type="button" id="btnFavoriProfil">' +
+            (fav ? "💚 Favori" : "❤️ Favori") +
+          "</button>" +
+          '<a href="index.html"><button type="button" class="btn-gris">🏠 Accueil</button></a>' +
+        "</div>" +
+      "</div>" +
+
+      '<div class="card">' +
+        "<h2 style='margin:0 0 10px;color:#16513A'>Présentation</h2>" +
+        '<p class="desc">' + echapper(pro.description || "Aucune description pour le moment.") + "</p>" +
+        '<div class="grid-info">' +
+          '<div class="info-box"><strong>Téléphone</strong>' + echapper(pro.telephone || "Non renseigné") + "</div>" +
+          '<div class="info-box"><strong>Horaires</strong>' + echapper(pro.horaires || "Non renseigné") + "</div>" +
+          '<div class="info-box"><strong>Adresse</strong>' + echapper(pro.adresse || "Non renseignée") + "</div>" +
+          '<div class="info-box"><strong>Vues</strong>' + echapper(pro.vues || 0) + "</div>" +
+        "</div>" +
+      "</div>" +
+
+      '<div class="card">' +
+        "<h2 style='margin:0 0 10px;color:#16513A'>Signaler ce profil</h2>" +
+        '<p class="meta" style="text-align:left">Un contenu inapproprié ? Envoyez un signalement.</p>' +
+        '<label for="motifSignalement"><strong>Motif</strong></label><br>' +
+        '<select id="motifSignalement" style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;margin:8px 0 12px">' +
+          '<option value="">Choisir un motif</option>' +
+          '<option value="Informations fausses">Informations fausses</option>' +
+          '<option value="Spam">Spam</option>' +
+          '<option value="Arnaque">Arnaque</option>' +
+          '<option value="Autre">Autre</option>' +
+        "</select>" +
+        '<label for="descriptionSignalement"><strong>Détails</strong></label><br>' +
+        '<textarea id="descriptionSignalement" rows="3" style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;margin:8px 0 12px" placeholder="Décrivez le problème..."></textarea>' +
+        '<button type="button" class="btn-rouge" id="btnSignaler">🚩 Envoyer le signalement</button>' +
+        '<p class="msg" id="messageSignalement"></p>' +
+      "</div>";
+
+    var btnFav = $("btnFavoriProfil");
+    if(btnFav){
+      btnFav.onclick = function(){
+        var on = basculerFavori(pro.id);
+        btnFav.textContent = on ? "💚 Favori" : "❤️ Favori";
+      };
+    }
+
+    var btnSig = $("btnSignaler");
+    if(btnSig){
+      btnSig.onclick = function(){
+        var motif = ($("motifSignalement").value || "").trim();
+        var description = ($("descriptionSignalement").value || "").trim();
+        var msg = $("messageSignalement");
+
+        if(!motif){
+          if(msg){ msg.style.color = "#c62828"; msg.textContent = "Choisissez un motif."; }
+          return;
+        }
+
+        var session = null;
+        try{ session = JSON.parse(localStorage.getItem("utilisateurConnecte") || "null"); }catch(e){}
+
+        var signalement = {
+          idProfessionnel: pro.id,
+          nomProfessionnel: pro.nom || "",
+          categorie: pro.categorie || "",
+          ville: pro.ville || "",
+          quartier: pro.quartier || "",
+          motif: motif,
+          description: description,
+          nomDeclarant: session ? (session.nom || "Utilisateur connecté") : "Visiteur",
+          telephoneDeclarant: session ? (session.telephone || "") : "",
+          date: new Date().toISOString(),
+          statut: "nouveau"
+        };
+
+        function okMsg(){
+          if($("motifSignalement")) $("motifSignalement").value = "";
+          if($("descriptionSignalement")) $("descriptionSignalement").value = "";
+          if(msg){ msg.style.color = "#176b24"; msg.textContent = "✅ Signalement envoyé. Merci."; }
+        }
+
+        try{
+          if (window.MQC_FIREBASE_PRET && typeof firebase !== "undefined") {
+            firebase.firestore().collection("signalements").add(signalement)
+              .then(okMsg)
+              .catch(function(err){
+                console.error(err);
+                if(msg){ msg.style.color = "#c62828"; msg.textContent = "Impossible d’envoyer (Firebase)."; }
+              });
+          } else {
+            var liste = [];
+            try{
+              liste = JSON.parse(localStorage.getItem("signalements") || "[]");
+              if(!Array.isArray(liste)) liste = [];
+            }catch(e){ liste = []; }
+            signalement.id = Date.now();
+            liste.unshift(signalement);
+            localStorage.setItem("signalements", JSON.stringify(liste));
+            okMsg();
+          }
+        }catch(e){
+          if(msg){ msg.style.color = "#c62828"; msg.textContent = "Impossible d’envoyer le signalement."; }
+        }
+      };
+    }
+  }
+
+  function demarrer(){
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get("id");
+
+    if(!id){
+      afficherIntrouvable();
+      return;
+    }
+
+    chargerPro(id, function(pro){
+      if(!pro || pro.suspendu === true){
+        afficherIntrouvable();
+        return;
+      }
+      incrementerVues(pro);
+      afficherProfil(pro);
+      document.title = (pro.nom || "Profil") + " - Mon Quartier Cameroun";
+      console.log("Profil OK:", pro.nom);
+    });
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", function(){ setTimeout(demarrer, 250); });
+  }else{
+    setTimeout(demarrer, 250);
+  }
+})();
+</script>
+</body>
+</html>
