@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Créer un compte - Mon Quartier Cameroun</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:linear-gradient(135deg,#f4f8ff,#ffffff);
+  color:#222;
+}
+.container{width:92%;max-width:520px;margin:0 auto;}
+.header{
+  background:#fff;
+  border-bottom:1px solid #e5e5e5;
+  padding:14px 0;
+}
+.header .container{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  max-width:1100px;
+}
+.logo{font-weight:bold;color:#16513A;font-size:18px;}
+nav a{
+  margin-left:10px;
+  text-decoration:none;
+  color:#444;
+  font-weight:600;
+}
+.section{padding:28px 0 40px;}
+.card{
+  background:#fff;
+  border-radius:22px;
+  padding:24px;
+  box-shadow:0 10px 30px rgba(0,0,0,.10);
+}
+.card h1{
+  margin:0 0 8px;
+  text-align:center;
+  color:#16513A;
+  font-size:24px;
+}
+.card .intro{
+  text-align:center;
+  color:#666;
+  margin:0 0 18px;
+}
+label{
+  display:block;
+  font-weight:bold;
+  margin:12px 0 6px;
+  color:#16513A;
+}
+input,select,textarea{
+  width:100%;
+  padding:14px;
+  border:1px solid #ddd;
+  border-radius:12px;
+  font-size:15px;
+  box-sizing:border-box;
+}
+input:focus,select:focus,textarea:focus{
+  outline:none;
+  border-color:#16513A;
+}
+textarea{min-height:90px;resize:vertical;}
+button[type="submit"]{
+  width:100%;
+  margin-top:18px;
+  padding:16px;
+  border:0;
+  border-radius:14px;
+  background:#16513A;
+  color:#fff;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+#messageInscription{
+  margin-top:14px;
+  text-align:center;
+  font-weight:bold;
+  min-height:22px;
+}
+.footer{
+  text-align:center;
+  padding:18px;
+  color:#666;
+  font-size:14px;
+}
+.lien{
+  text-align:center;
+  margin-top:16px;
+}
+.lien a{color:#16513A;font-weight:bold;}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">🏘️ Mon Quartier <span>Cameroun</span></div>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="connexion.html">Connexion</a>
+    </nav>
+  </div>
+</header>
+
+<main class="section">
+  <div class="container">
+    <div class="card">
+      <h1>Créer mon compte pro</h1>
+      <p class="intro">Inscrivez votre activité sur Mon Quartier Cameroun.</p>
+
+      <form id="formInscription" autocomplete="off">
+        <label for="nomInscription">Nom de l'activité *</label>
+        <input id="nomInscription" type="text" required placeholder="Ex: Chez Mado Restaurant">
+
+        <label for="telephoneInscription">Téléphone *</label>
+        <input id="telephoneInscription" type="tel" required placeholder="Ex: 693984180">
+
+        <label for="motdepasseInscription">Mot de passe * (min. 6 caractères)</label>
+        <input id="motdepasseInscription" type="password" required placeholder="Minimum 6 caractères">
+
+        <label for="categorieInscription">Catégorie</label>
+        <input id="categorieInscription" type="text" placeholder="Ex: Restaurant">
+
+        <label for="villeInscription">Ville</label>
+        <select id="villeInscription">
+          <option value="">Choisir</option>
+          <option value="Yaoundé">Yaoundé</option>
+          <option value="Douala">Douala</option>
+          <option value="Bafoussam">Bafoussam</option>
+          <option value="Garoua">Garoua</option>
+          <option value="Bamenda">Bamenda</option>
+          <option value="Kribi">Kribi</option>
+        </select>
+
+        <label for="quartierInscription">Quartier</label>
+        <input id="quartierInscription" type="text" placeholder="Ex: Akwa">
+
+        <label for="descriptionInscription">Description</label>
+        <textarea id="descriptionInscription" placeholder="Présentez votre activité..."></textarea>
+
+        <button type="submit">🚀 Créer mon compte</button>
+        <p id="messageInscription"></p>
+      </form>
+
+      <p class="lien">
+        Déjà inscrit ? <a href="connexion.html">Se connecter</a>
+      </p>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">© 2026 Mon Quartier Cameroun</footer>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+<script src="js/core/firebase.js"></script>
+
+<script>
+(function () {
+  function msg(texte, ok) {
+    var el = document.getElementById("messageInscription");
+    if (!el) return;
+    el.textContent = texte || "";
+    el.style.color = ok ? "#176b24" : "#c62828";
+  }
+
+  function telVersEmail(tel) {
+    var n = String(tel || "").replace(/\D/g, "");
+    if (n.length === 9) n = "237" + n;
+    return n + "@mqc.app";
+  }
+
+  // Init Firebase
+  try {
+    if (!window.MQC_FIREBASE_CONFIG) {
+      msg("Config Firebase manquante (js/core/firebase.js).");
+      return;
+    }
+    if (typeof firebase === "undefined") {
+      msg("SDK Firebase non chargé. Vérifie Internet.");
+      return;
+    }
+    if (!firebase.apps.length) {
+      firebase.initializeApp(window.MQC_FIREBASE_CONFIG);
+    }
+    window.MQC_FIREBASE_PRET = true;
+    console.log("Firebase prêt (inscription)");
+  } catch (e) {
+    console.error(e);
+    msg("Erreur Firebase : " + (e.message || e));
+    return;
+  }
+
+  var form = document.getElementById("formInscription");
+  if (!form) return;
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    if (!window.MQC_FIREBASE_PRET) {
+      msg("Firebase pas prêt.");
+      return;
+    }
+
+    var nom = (document.getElementById("nomInscription").value || "").trim();
+    var tel = (document.getElementById("telephoneInscription").value || "").trim();
+    var mdp = (document.getElementById("motdepasseInscription").value || "").trim();
+    var categorie = (document.getElementById("categorieInscription").value || "").trim();
+    var ville = (document.getElementById("villeInscription").value || "").trim();
+    var quartier = (document.getElementById("quartierInscription").value || "").trim();
+    var description = (document.getElementById("descriptionInscription").value || "").trim();
+
+    if (!nom || !tel || !mdp) {
+      msg("Nom, téléphone et mot de passe obligatoires.");
+      return;
+    }
+    if (mdp.length < 6) {
+      msg("Mot de passe : minimum 6 caractères.");
+      return;
+    }
+
+    var email = telVersEmail(tel);
+    var btn = form.querySelector('button[type="submit"]');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Création...";
+    }
+    msg("Création du compte...");
+
+    firebase.auth().createUserWithEmailAndPassword(email, mdp)
+      .then(function (cred) {
+        var uid = cred.user.uid;
+        var data = {
+          nom: nom,
+          telephone: String(tel).replace(/\D/g, ""),
+          email: email,
+          role: "professionnel",
+          categorie: categorie,
+          ville: ville,
+          quartier: quartier,
+          description: description,
+          verifie: false,
+          premium: false,
+          suspendu: false,
+          dateCreation: new Date().toISOString()
+        };
+
+        var db = firebase.firestore();
+        return db.collection("users").doc(uid).set(data)
+          .then(function () {
+            return db.collection("professionnels").doc(uid).set(data);
+          })
+          .then(function () {
+            localStorage.setItem("utilisateurConnecte", JSON.stringify({
+              id: uid,
+              nom: data.nom,
+              telephone: data.telephone,
+              role: "professionnel",
+              email: email
+            }));
+            msg("Compte créé avec succès.", true);
+            setTimeout(function () {
+              window.location.replace("dashboard.html");
+            }, 900);
+          });
+      })
+      .catch(function (err) {
+        console.error(err);
+        var code = err && err.code ? err.code : "";
+        if (code === "auth/email-already-in-use") {
+          msg("Ce téléphone est déjà inscrit. Va sur Connexion.");
+        } else if (code === "auth/weak-password") {
+          msg("Mot de passe trop faible (min. 6 caractères).");
+        } else if (code === "auth/invalid-email") {
+          msg("Téléphone invalide.");
+        } else if (code === "permission-denied") {
+          msg("Permission Firestore refusée. Vérifie le mode test Firestore.");
+        } else {
+          msg("Erreur : " + (err.message || "inscription impossible"));
+        }
+      })
+      .finally(function () {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "🚀 Créer mon compte";
+        }
+      });
+  });
+})();
+</script>
+</body>
+  </html>
