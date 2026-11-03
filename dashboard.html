@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Professionnel - Mon Quartier Cameroun</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f7f5;color:#222}
+.container{width:92%;max-width:900px;margin:0 auto}
+.header{background:#0f2f23;color:#fff;padding:14px 0}
+.header .container{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.logo{font-weight:bold;font-size:18px}
+nav a,nav button{
+  margin-left:8px;color:#fff;text-decoration:none;background:transparent;
+  border:1px solid rgba(255,255,255,.35);padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:600
+}
+.section{padding:22px 0}
+.card{
+  background:#fff;border-radius:16px;padding:18px;
+  box-shadow:0 4px 14px rgba(0,0,0,.06);margin-bottom:14px
+}
+h1,h2{color:#16513A;margin:0 0 12px}
+#messageDashboard{font-weight:bold;min-height:22px;margin:0 0 12px}
+label{display:block;font-weight:bold;margin:10px 0 6px;color:#16513A}
+input,textarea{
+  width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font:inherit;box-sizing:border-box
+}
+textarea{min-height:90px}
+button,.btn{
+  border:0;background:#16513A;color:#fff;padding:12px 14px;border-radius:10px;
+  font-weight:bold;cursor:pointer;margin:6px 6px 0 0
+}
+.btn-gris{background:#eceff1;color:#333}
+.photo-wrap{text-align:center;margin-bottom:12px}
+#photoProfil{
+  width:120px;height:120px;border-radius:50%;object-fit:cover;border:4px solid #eee;background:#e8f0eb
+}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:#f7faf8;border-radius:12px;padding:12px;text-align:center}
+.stat strong{display:block;font-size:22px;color:#16513A}
+.galerie{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.galerie img{width:100%;height:90px;object-fit:cover;border-radius:10px}
+.galerie button{width:100%;margin-top:4px;background:#c62828}
+@media(max-width:700px){.stats,.galerie{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">🏘️ Espace pro</div>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <button type="button" id="deconnexion">Déconnexion</button>
+    </nav>
+  </div>
+</header>
+
+<main class="section">
+  <div class="container">
+    <h1>Mon tableau de bord</h1>
+    <p id="messageDashboard">Chargement...</p>
+
+    <div class="card">
+      <h2>Profil</h2>
+      <div class="photo-wrap">
+        <img id="photoProfil" alt="Photo profil" src="">
+      </div>
+      <label>Changer la photo</label>
+      <input type="file" id="inputPhotoProfil" accept="image/*">
+
+      <label>Nom</label>
+      <input id="nomEntreprise" type="text">
+
+      <label>Téléphone</label>
+      <input id="telephoneEntreprise" type="tel">
+
+      <label>Catégorie</label>
+      <input id="categorieEntreprise" type="text">
+
+      <label>Ville</label>
+      <input id="villeEntreprise" type="text">
+
+      <label>Quartier</label>
+      <input id="quartierEntreprise" type="text">
+
+      <label>Horaires</label>
+      <input id="horairesEntreprise" type="text" placeholder="Ex: 8h - 18h">
+
+      <label>Description</label>
+      <textarea id="descriptionEntreprise"></textarea>
+
+      <button type="button" id="btnEnregistrerProfil">💾 Enregistrer</button>
+    </div>
+
+    <div class="card">
+      <h2>Statistiques</h2>
+      <div class="stats">
+        <div class="stat"><strong id="statVues">0</strong>Vues</div>
+        <div class="stat"><strong id="statFavoris">0</strong>Favoris</div>
+        <div class="stat"><strong id="statGalerie">0</strong>Photos</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Galerie</h2>
+      <input type="file" id="inputGalerie" accept="image/*" multiple>
+      <div class="galerie" id="listeGalerie"></div>
+    </div>
+
+    <div class="card">
+      <h2>Localisation</h2>
+      <button type="button" id="actualiserGPS">📍 Enregistrer ma position GPS</button>
+    </div>
+  </div>
+</main>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+<script src="js/core/firebase.js"></script>
+<script>
+(function () {
+  try {
+    if (window.MQC_FIREBASE_CONFIG && typeof firebase !== "undefined") {
+      if (!firebase.apps.length) firebase.initializeApp(window.MQC_FIREBASE_CONFIG);
+      window.MQC_FIREBASE_PRET = true;
+    }
+  } catch (e) {
+    console.error(e);
+    window.MQC_FIREBASE_PRET = false;
+  }
+})();
+</script>
+
+<script src="js/dashboard/dashboard.js"></script>
+</body>
+  </html>
