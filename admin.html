@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration - Mon Quartier Cameroun</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#222}
+.admin-layout{display:flex;min-height:100vh}
+.sidebar{width:230px;background:#0b1f3a;color:#fff;padding:18px 14px;flex-shrink:0}
+.sidebar h2{margin:0 0 6px}
+.sidebar p{margin:0 0 16px;opacity:.85}
+.sidebar a,.sidebar button{
+  display:block;width:100%;text-align:left;color:#fff;text-decoration:none;
+  background:rgba(255,255,255,.08);border:0;border-radius:10px;
+  padding:10px 12px;margin:0 0 8px;cursor:pointer;font:inherit
+}
+.admin-content{flex:1;padding:18px}
+.card,.admin-card,.gestion-section{
+  background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;
+  box-shadow:0 4px 14px rgba(0,0,0,.06)
+}
+h1,h2{color:#0b1f3a;margin:0 0 12px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat-box{background:#f5f8fb;border-radius:12px;padding:12px;text-align:center}
+.stat-box h3{margin:0;font-size:22px;color:#16513A}
+#messageAdmin{font-weight:bold;min-height:22px}
+button,.admin-btn{
+  border:0;background:#16513A;color:#fff;padding:10px 12px;border-radius:10px;
+  cursor:pointer;font-weight:600;margin:4px 4px 0 0
+}
+button.btn-gris{background:#eceff1;color:#333}
+button.btn-rouge{background:#c62828;color:#fff}
+.pro-line{border-bottom:1px solid #eee;padding:10px 0}
+.search-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.search-row input{flex:1;min-width:180px;padding:10px;border:1px solid #ddd;border-radius:10px}
+@media(max-width:800px){
+  .admin-layout{flex-direction:column}
+  .sidebar{width:100%}
+  .stats-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="sidebar">
+    <h2>🏘️ M.Q.C</h2>
+    <p>👑 Administrateur</p>
+    <a href="#tableauDeBord">📊 Tableau de bord</a>
+    <a href="#professionnels">👥 Professionnels</a>
+    <a href="#signalements">🚩 Signalements</a>
+    <button type="button" id="btnDeconnexionAdmin">🚪 Déconnexion</button>
+    <a href="index.html">← Accueil</a>
+  </aside>
+
+  <main class="admin-content">
+    <h1>Administration</h1>
+    <p id="messageAdmin">Vérification de l'accès...</p>
+
+    <section class="gestion-section" id="tableauDeBord">
+      <h2>📊 Tableau de bord</h2>
+      <div class="stats-grid">
+        <div class="stat-box"><h3 id="statAdminPros">0</h3><p>Professionnels</p></div>
+        <div class="stat-box"><h3 id="statAdminUsers">0</h3><p>Utilisateurs</p></div>
+        <div class="stat-box"><h3 id="statAdminSignalements">0</h3><p>Signalements</p></div>
+        <div class="stat-box"><h3 id="statAdminSuspendus">0</h3><p>Suspendus</p></div>
+      </div>
+      <button type="button" id="btnAdminActualiser">🔄 Actualiser</button>
+    </section>
+
+    <section class="gestion-section" id="professionnels">
+      <h2>👥 Professionnels</h2>
+      <div class="search-row">
+        <input type="text" id="rechercheProAdmin" placeholder="Rechercher nom, téléphone, ville...">
+        <button type="button" id="btnFiltrerProsAdmin">🔍 Filtrer</button>
+      </div>
+      <div id="listeProfessionnelsAdmin"><p>Chargement...</p></div>
+    </section>
+
+    <section class="gestion-section" id="signalements">
+      <h2>🚩 Signalements</h2>
+      <div id="listeSignalements"><p>Chargement...</p></div>
+    </section>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+<script src="js/core/firebase.js"></script>
+
+<script>
+(function () {
+  var tousPros = [];
+
+  function msg(t, ok) {
+    var el = document.getElementById("messageAdmin");
+    if (!el) return;
+    el.textContent = t || "";
+    el.style.color = ok ? "#176b24" : "#c62828";
+  }
+
+  function echapper(t) {
+    return String(t || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function session() {
+    try {
+      var s = JSON.parse(localStorage.getItem("utilisateurConnecte") || "null");
+      return s && s.id ? s : null;
+    } catch (e) { return null; }
+  }
+
+  function initFirebase() {
+    if (!window.MQC_FIREBASE_CONFIG || typeof firebase === "undefined") {
+      throw new Error("Firebase non chargé");
+    }
+    if (!firebase.apps.length) firebase.initializeApp(window.MQC_FIREBASE_CONFIG);
+    window.MQC_FIREBASE_PRET = true;
+  }
+
+  function updatePro(id, patch) {
+    var db = firebase.firestore();
+    return db.collection("professionnels").doc(String(id)).set(patch, { merge: true })
+      .then(function () {
+        return db.collection("users").doc(String(id)).set(patch, { merge: true });
+      });
+  }
+
+  function afficherPros(liste) {
+    var zone = document.getElementById("listeProfessionnelsAdmin");
+    if (!zone) return;
+    if (!liste.length) {
+      zone.innerHTML = "<p>Aucun professionnel.</p>";
+      return;
+    }
+    zone.innerHTML = liste.map(function (p) {
+      var id = echapper(p.id);
+      var statut = [];
+      if (p.verifie) statut.push("Vérifié");
+      if (p.premium) statut.push("Premium");
+      if (p.suspendu) statut.push("Suspendu");
+      if (!statut.length) statut.push("Standard");
+      return '<div class="pro-line">' +
+        "<strong>" + echapper(p.nom) + "</strong><br>" +
+        echapper(p.telephone) + " — " + echapper(p.ville) + " — " + echapper(p.categorie) + "<br>" +
+        "<small>" + echapper(statut.join(", ")) + "</small><br>" +
+        '<button type="button" data-act="verif" data-id="' + id + '">Vérifié</button>' +
+        '<button type="button" class="btn-gris" data-act="premium" data-id="' + id + '">Premium</button>' +
+        '<button type="button" class="btn-rouge" data-act="suspend" data-id="' + id + '">Suspendre</button>' +
+      "</div>";
+    }).join("");
+  }
+
+  function chargerTout() {
+    var db = firebase.firestore();
+    return Promise.all([
+      db.collection("professionnels").get(),
+      db.collection("users").get(),
+      db.collection("signalements").get()
+    ]).then(function (res) {
+      tousPros = [];
+      res[0].forEach(function (doc) {
+        var d = doc.data() || {};
+        d.id = d.id || doc.id;
+        tousPros.push(d);
+      });
+
+      var usersN = res[1].size;
+      var sigs = [];
+      res[2].forEach(function (doc) {
+        var d = doc.data() || {};
+        d.id = doc.id;
+        sigs.push(d);
+      });
+      sigs.sort(function (a, b) {
+        return String(b.date || "").localeCompare(String(a.date || ""));
+      });
+
+      var suspendus = tousPros.filter(function (p) { return p.suspendu === true; }).length;
+
+      document.getElementById("statAdminPros").textContent = String(tousPros.length);
+      document.getElementById("statAdminUsers").textContent = String(usersN);
+      document.getElementById("statAdminSignalements").textContent = String(sigs.length);
+      document.getElementById("statAdminSuspendus").textContent = String(suspendus);
+
+      afficherPros(tousPros);
+
+      var zoneS = document.getElementById("listeSignalements");
+      if (zoneS) {
+        if (!sigs.length) zoneS.innerHTML = "<p>Aucun signalement.</p>";
+        else {
+          zoneS.innerHTML = sigs.map(function (s) {
+            return '<div class="pro-line">' +
+              "<strong>" + echapper(s.motif) + "</strong> — " + echapper(s.nomProfessionnel) + "<br>" +
+              echapper(s.description) + "<br><small>" + echapper(s.date) + " — " + echapper(s.statut || "nouveau") + "</small>" +
+            "</div>";
+          }).join("");
+        }
+      }
+
+      msg("Admin Firebase prêt.", true);
+    });
+  }
+
+  function demarrer() {
+    var s = session();
+    if (!s) {
+      window.location.replace("connexion.html");
+      return;
+    }
+
+    try { initFirebase(); }
+    catch (e) {
+      msg("Firebase indisponible. Utilise Chrome + Internet.");
+      return;
+    }
+
+    firebase.firestore().collection("users").doc(String(s.id)).get()
+      .then(function (doc) {
+        var data = doc.exists ? (doc.data() || {}) : {};
+        var role = String(data.role || s.role || "").trim().toLowerCase();
+
+        if (role !== "admin") {
+          msg("Accès refusé. role actuel = " + (role || "(vide)") + " — mets role=admin dans Firestore users/" + s.id);
+          return;
+        }
+
+        s.role = "admin";
+        localStorage.setItem("utilisateurConnecte", JSON.stringify(s));
+        return chargerTout();
+      })
+      .catch(function (err) {
+        msg("Erreur : " + (err.message || err));
+      });
+
+    document.getElementById("btnDeconnexionAdmin").onclick = function () {
+      if (!confirm("Déconnexion ?")) return;
+      localStorage.removeItem("utilisateurConnecte");
+      try { firebase.auth().signOut(); } catch (e) {}
+      window.location.replace("connexion.html");
+    };
+
+    document.getElementById("btnAdminActualiser").onclick = function () {
+      msg("Actualisation...");
+      chargerTout().catch(function (e) { msg(String(e.message || e)); });
+    };
+
+    document.getElementById("btnFiltrerProsAdmin").onclick = function () {
+      var q = (document.getElementById("rechercheProAdmin").value || "").toLowerCase().trim();
+      var liste = !q ? tousPros : tousPros.filter(function (p) {
+        return [p.nom, p.telephone, p.ville, p.categorie].join(" ").toLowerCase().indexOf(q) !== -1;
+      });
+      afficherPros(liste);
+    };
+
+    document.getElementById("listeProfessionnelsAdmin").addEventListener("click", function (e) {
+      var btn = e.target.closest("button[data-act]");
+      if (!btn) return;
+      var id = btn.getAttribute("data-id");
+      var act = btn.getAttribute("data-act");
+      var pro = null;
+      for (var i = 0; i < tousPros.length; i++) {
+        if (String(tousPros[i].id) === String(id)) { pro = tousPros[i]; break; }
+      }
+      if (!pro) return;
+
+      var patch = {};
+      if (act === "verif") patch.verifie = !pro.verifie;
+      if (act === "premium") patch.premium = !pro.premium;
+      if (act === "suspend") patch.suspendu = !pro.suspendu;
+
+      msg("Mise à jour...");
+      updatePro(id, patch)
+        .then(function () { return chargerTout(); })
+        .catch(function (err) { msg("Erreur : " + (err.message || err)); });
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", demarrer);
+  } else {
+    demarrer();
+  }
+})();
+</script>
+</body>
+</html>
