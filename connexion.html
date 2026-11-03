@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion - Mon Quartier Cameroun</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.connexion-body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#f4f8ff,#ffffff);
+}
+.connexion-section{padding:50px 15px;}
+.connexion-card{
+  max-width:450px;
+  margin:auto;
+  background:white;
+  padding:30px;
+  border-radius:25px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.12);
+}
+.connexion-logo{text-align:center;font-size:50px;}
+.connexion-card h1{text-align:center;color:#16513A;}
+.connexion-card p{text-align:center;color:#666;}
+.connexion-card label{
+  display:block;
+  font-weight:bold;
+  margin-top:15px;
+  margin-bottom:8px;
+}
+.connexion-card input{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  font-size:15px;
+  box-sizing:border-box;
+}
+.connexion-card input:focus{
+  outline:none;
+  border-color:#16513A;
+}
+.connexion-card button{
+  width:100%;
+  margin-top:25px;
+  padding:16px;
+  border:none;
+  border-radius:15px;
+  background:#16513A;
+  color:white;
+  font-size:17px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.message-connexion{
+  margin-top:20px;
+  text-align:center;
+  font-weight:bold;
+  color:#c62828;
+}
+</style>
+</head>
+<body class="connexion-body">
+
+<header class="header">
+  <div class="container">
+    <div class="logo">🏘️ Mon Quartier <span>Cameroun</span></div>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="inscription.html">Créer un compte</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="connexion-section">
+    <div class="connexion-card">
+      <div class="connexion-logo">🏘️</div>
+      <h1>Connexion</h1>
+      <p>Accédez à votre espace Mon Quartier.</p>
+
+      <form id="formConnexion" autocomplete="off">
+        <label>📞 Téléphone</label>
+        <input type="tel" id="telephoneConnexion" placeholder="Exemple : 693984180" required>
+
+        <label>🔐 Mot de passe</label>
+        <input type="password" id="motdepasseConnexion" placeholder="Minimum 6 caractères" required>
+
+        <button type="submit">🚀 Se connecter</button>
+        <p id="messageConnexion" class="message-connexion">Chargement Firebase...</p>
+      </form>
+
+      <p style="margin-top:25px;">
+        Pas encore inscrit ?<br>
+        <a href="inscription.html">Créer un compte</a>
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>© 2026 Mon Quartier Cameroun</p>
+  </div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+<script src="js/core/firebase.js"></script>
+
+<script>
+(function () {
+  function message(texte, ok) {
+    var el = document.getElementById("messageConnexion");
+    if (!el) return;
+    el.textContent = texte || "";
+    el.style.color = ok ? "#176b24" : "#c62828";
+  }
+
+  function initFirebase() {
+    try {
+      if (!window.MQC_FIREBASE_CONFIG) {
+        message("Étape A : config absente. Vérifie js/core/firebase.js");
+        window.MQC_FIREBASE_PRET = false;
+        return false;
+      }
+      if (typeof firebase === "undefined") {
+        message("Étape B : SDK non chargé. Active Internet et recharge.");
+        window.MQC_FIREBASE_PRET = false;
+        return false;
+      }
+      if (!firebase.apps.length) {
+        firebase.initializeApp(window.MQC_FIREBASE_CONFIG);
+      }
+      window.MQC_FIREBASE_APP = firebase.app();
+      window.MQC_DB = firebase.firestore();
+      window.MQC_FIREBASE_PRET = true;
+      message("Firebase prêt. Tu peux te connecter.", true);
+      return true;
+    } catch (e) {
+      window.MQC_FIREBASE_PRET = false;
+      message("Étape C : " + (e && e.message ? e.message : e));
+      return false;
+    }
+  }
+
+  if (!initFirebase()) {
+    setTimeout(initFirebase, 800);
+  }
+
+  function telVersEmail(tel) {
+    var n = String(tel || "").replace(/\D/g, "");
+    if (n.length === 9) n = "237" + n;
+    return n + "@mqc.app";
+  }
+
+  function normaliserRole(valeur) {
+    return String(valeur || "").trim().toLowerCase();
+  }
+
+  var form = document.getElementById("formConnexion");
+  if (!form) return;
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!window.MQC_FIREBASE_PRET) initFirebase();
+
+    if (!window.MQC_FIREBASE_PRET || typeof firebase === "undefined") {
+      message("Firebase pas prêt. Vérifie Internet et recharge.");
+      return;
+    }
+
+    var tel = (document.getElementById("telephoneConnexion").value || "").trim();
+    var mdp = (document.getElementById("motdepasseConnexion").value || "").trim();
+
+    if (!tel || !mdp) {
+      message("Remplis le téléphone et le mot de passe.");
+      return;
+    }
+    if (mdp.length < 6) {
+      message("Mot de passe trop court (minimum 6 caractères).");
+      return;
+    }
+
+    var email = telVersEmail(tel);
+    message("Connexion en cours...");
+
+    firebase.auth().signInWithEmailAndPassword(email, mdp)
+      .then(function (cred) {
+        var uid = cred.user.uid;
+        var db = firebase.firestore();
+
+        return db.collection("users").doc(uid).get()
+          .then(function (doc) {
+            var data = doc.exists ? (doc.data() || {}) : {};
+            var role = normaliserRole(data.role || "professionnel");
+
+            // Secours : role parfois seulement dans professionnels
+            if (role !== "admin") {
+              return db.collection("professionnels").doc(uid).get()
+                .then(function (doc2) {
+                  var p = doc2.exists ? (doc2.data() || {}) : {};
+                  if (normaliserRole(p.role) === "admin") {
+                    role = "admin";
+                  }
+                  return { data: data, role: role, uid: uid };
+                });
+            }
+            return { data: data, role: role, uid: uid };
+          })
+          .then(function (info) {
+            var data = info.data || {};
+            var role = normaliserRole(info.role || "professionnel");
+
+            var session = {
+              id: info.uid,
+              nom: data.nom || "",
+              telephone: data.telephone || tel,
+              role: role,
+              email: email
+            };
+
+            localStorage.setItem("utilisateurConnecte", JSON.stringify(session));
+            message("Connexion OK — rôle : " + role, true);
+
+            setTimeout(function () {
+              if (role === "admin") {
+                window.location.replace("admin.html");
+              } else {
+                window.location.replace("dashboard.html");
+              }
+            }, 400);
+          });
+      })
+      .catch(function (err) {
+        console.error(err);
+        var code = err && err.code ? err.code : "";
+        if (
+          code === "auth/user-not-found" ||
+          code === "auth/invalid-credential" ||
+          code === "auth/wrong-password"
+        ) {
+          message("Compte introuvable ou mot de passe incorrect.");
+        } else if (code === "auth/invalid-email") {
+          message("Téléphone invalide.");
+        } else if (code === "auth/too-many-requests") {
+          message("Trop d’essais. Attends un peu.");
+        } else {
+          message("Erreur : " + (err.message || "connexion impossible"));
+        }
+      });
+  });
+})();
+</script>
+</body>
+                                                                                  </html>
