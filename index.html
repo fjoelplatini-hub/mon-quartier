@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon Quartier Cameroun</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f7f5;color:#222}
+.container{width:92%;max-width:1100px;margin:0 auto}
+.header{background:#fff;border-bottom:1px solid #e5e5e5;padding:14px 0;position:sticky;top:0;z-index:100}
+.header .container{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.logo{font-weight:bold;color:#16513A;font-size:18px}
+nav a{margin-left:10px;text-decoration:none;color:#444;font-weight:600}
+nav a:hover{color:#16513A}
+.hero{background:linear-gradient(135deg,#123d2d,#16513A);color:#fff;padding:40px 0;text-align:center}
+.hero h1{margin:0 0 10px;font-size:28px}
+.hero p{margin:0 0 18px;opacity:.95}
+.search-box{display:grid;grid-template-columns:1fr 1.4fr auto;gap:8px;background:#fff;padding:12px;border-radius:14px;max-width:800px;margin:0 auto 14px}
+.search-box input,.search-box select,.form-grid input,.form-grid select,.form-grid textarea{
+  width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font:inherit
+}
+.search-box button,.btn,.card-actions button,.hero-actions button,.form-actions button{
+  border:0;background:#16513A;color:#fff;padding:12px 14px;border-radius:10px;font-weight:bold;cursor:pointer
+}
+.btn-light{background:#fff !important;color:#16513A !important}
+.hero-actions,.form-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px auto}
+.stat-card,.service-card,.form-card{
+  background:#fff;border-radius:14px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,.06)
+}
+.service-card:hover{box-shadow:0 8px 20px rgba(0,0,0,.10)}
+.stat-card{text-align:center}
+.stat-card h2{margin:0;color:#16513A}
+.section{padding:26px 0}
+.section h2{margin:0 0 14px;color:#16513A}
+.cats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.cats button{border:1px solid #cfe0d6;background:#fff;color:#16513A;padding:10px 12px;border-radius:999px;font-weight:bold;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.service-card h3{margin:0 0 8px;color:#16513A}
+.service-card p{margin:0 0 6px;color:#555}
+.card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.panel-top{display:flex;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+#vueResultats{display:none}
+.form-card{max-width:720px;margin:0 auto}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:1 / -1}
+.form-grid label{display:block;font-weight:bold;margin-bottom:6px;color:#16513A}
+#messageAjoutService{text-align:center;font-weight:bold;min-height:22px;margin:10px 0 0}
+.contact-box{background:linear-gradient(135deg,#16513A,#1f6b4b);color:#fff;border-radius:18px;padding:28px 20px;text-align:center}
+.contact-box h2{margin:0 0 8px;color:#fff}
+.contact-box p{margin:0 auto 16px;max-width:560px;opacity:.95}
+.footer{background:#0f2f23;color:#fff;text-align:center;padding:20px 0;margin-top:20px}
+@media(max-width:700px){
+  .search-box,.form-grid,.stats,.grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">🏘️ Mon Quartier Cameroun</div>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="favoris.html">Favoris</a>
+      <a href="#ajouter-service">Ajouter</a>
+      <a href="#contact">Contact</a>
+      <a href="connexion.html">Connexion</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div id="vueAccueil">
+
+  <section class="hero" id="accueil">
+    <div class="container">
+      <h1>Services de votre quartier</h1>
+      <p>Trouvez un professionnel près de chez vous</p>
+
+      <div class="search-box">
+        <select id="ville">
+          <option value="">📍 Ville</option>
+          <option value="Yaoundé">Yaoundé</option>
+          <option value="Douala">Douala</option>
+          <option value="Bafoussam">Bafoussam</option>
+          <option value="Garoua">Garoua</option>
+          <option value="Bamenda">Bamenda</option>
+          <option value="Kribi">Kribi</option>
+        </select>
+        <input id="recherche" type="text" placeholder="🔎 Métier, nom, catégorie...">
+        <button type="button" id="btnRecherche">Rechercher</button>
+      </div>
+
+      <div class="hero-actions">
+        <a href="inscription.html"><button type="button" class="btn-light">➕ Créer mon compte pro</button></a>
+        <a href="#contact"><button type="button">📞 Contact</button></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="stats">
+      <div class="stat-card"><h2 id="nombreProfessionnels">0+</h2><p>Professionnels</p></div>
+      <div class="stat-card"><h2 id="nombreVilles">0+</h2><p>Villes</p></div>
+      <div class="stat-card"><h2>24/7</h2><p>Disponible</p></div>
+    </div>
+  </section>
+
+  <section class="section" id="categories">
+    <div class="container">
+      <h2>Catégories</h2>
+      <div class="cats" id="listeCategories"></div>
+
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 12px;">
+        <h2 style="margin:0">Professionnels</h2>
+        <a href="inscription.html"><button type="button" class="btn">➕ S'inscrire</button></a>
+      </div>
+
+      <div class="grid" id="listeServices">
+        <div class="service-card">
+          <h3>Chargement...</h3>
+          <p>Lecture des professionnels...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="ajouter-service">
+    <div class="container">
+      <h2 style="text-align:center">➕ Ajouter un service</h2>
+      <p style="text-align:center;color:#666;margin-top:-6px">
+        Pour apparaître en ligne pour tous les Camerounais, créez un compte professionnel.
+      </p>
+      <div class="form-card" style="text-align:center">
+        <p>L'inscription en ligne utilise Firebase (visible sur tous les téléphones).</p>
+        <div class="form-actions" style="margin-top:14px">
+          <a href="inscription.html"><button type="button" class="btn">🚀 Créer mon compte pro</button></a>
+          <a href="connexion.html"><button type="button" class="btn-light">Déjà inscrit ? Connexion</button></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="contact">
+    <div class="container">
+      <div class="contact-box">
+        <h2>Contact</h2>
+        <p>Une question ou besoin d’aide pour publier votre activité ? Contactez le support.</p>
+        <div class="hero-actions">
+          <a href="https://wa.me/237693984180" target="_blank" rel="noopener">
+            <button type="button" class="btn-light">💬 WhatsApp support</button>
+          </a>
+          <a href="inscription.html"><button type="button">➕ Créer un compte</button></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="vueResultats">
+  <section class="section">
+    <div class="container">
+      <div class="panel-top">
+        <button type="button" class="btn" id="btnRetour">← Retour</button>
+        <div>
+          <h2 id="titreResultats" style="margin:0;color:#16513A">Résultats</h2>
+          <p id="infoResultats" style="margin:4px 0 0;color:#666">0 professionnel(s)</p>
+        </div>
+      </div>
+      <div class="grid" id="listeResultats"></div>
+    </div>
+  </section>
+</div>
+</main>
+
+<footer class="footer">
+  <div class="container">© 2026 Mon Quartier Cameroun</div>
+</footer>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+<script src="js/core/firebase.js"></script>
+<script>
+(function () {
+  try {
+    if (window.MQC_FIREBASE_CONFIG && typeof firebase !== "undefined") {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(window.MQC_FIREBASE_CONFIG);
+      }
+      window.MQC_FIREBASE_PRET = true;
+      console.log("Firebase prêt (index)");
+    } else {
+      window.MQC_FIREBASE_PRET = false;
+    }
+  } catch (e) {
+    console.error(e);
+    window.MQC_FIREBASE_PRET = false;
+  }
+})();
+</script>
+
+<script src="js/core/database.js"></script>
+<script src="js/core/utils.js"></script>
+
+<script>
+(function () {
+  var demarre = false;
+  var cachePros = [];
+
+  function $(id){ return document.getElementById(id); }
+
+  function echapper(t){
+    return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  function lirePros(){
+    return Array.isArray(cachePros)
+      ? cachePros.filter(function(p){ return p && p.suspendu !== true; })
+      : [];
+  }
+
+  function chargerProsLocal(callback){
+    try{
+      if(window.MQC_DATABASE && Array.isArray(MQC_DATABASE.professionnels)){
+        cachePros = MQC_DATABASE.professionnels.slice();
+      } else {
+        var brut = localStorage.getItem("professionnels");
+        var liste = brut ? JSON.parse(brut) : [];
+        cachePros = Array.isArray(liste) ? liste : [];
+      }
+    }catch(e){
+      cachePros = [];
+    }
+    if (typeof callback === "function") callback(cachePros);
+  }
+
+  function chargerProsFirebase(callback){
+    if (window.MQC_FIREBASE_PRET && typeof firebase !== "undefined") {
+      firebase.firestore().collection("professionnels").get()
+        .then(function(snap){
+          var liste = [];
+          snap.forEach(function(doc){
+            var d = doc.data() || {};
+            d.id = d.id || doc.id;
+            liste.push(d);
+          });
+          cachePros = liste;
+          console.log("Pros Firestore:", liste.length);
+          if (typeof callback === "function") callback(liste);
+        })
+        .catch(function(err){
+          console.error("Firestore pros:", err);
+          chargerProsLocal(callback);
+        });
+      return;
+    }
+    chargerProsLocal(callback);
+  }
+
+  function carte(pro){
+    var tel = String(pro.whatsapp || pro.telephone || "").replace(/\D/g,"");
+    if(tel.length === 9) tel = "237" + tel;
+
+    var favs = [];
+    try {
+      favs = JSON.parse(localStorage.getItem("favoris") || "[]");
+      if(!Array.isArray(favs)) favs = [];
+    } catch(e) { favs = []; }
+
+    var estFav = favs.some(function(x){
+      return String(x) === String(pro.id);
+    });
+
+    return '<div class="service-card">' +
+      "<h3>" + echapper(pro.nom || "Professionnel") + (pro.verifie?" ✅":"") + (pro.premium?" ⭐":"") + "</h3>" +
+      "<p>💼 " + echapper(pro.categorie || "") + "</p>" +
+      "<p>📍 " + echapper(pro.quartier || "") + (pro.ville ? ", " + echapper(pro.ville) : "") + "</p>" +
+      "<p>" + echapper(pro.description || "") + "</p>" +
+      '<div class="card-actions">' +
+        (tel ? '<a href="https://wa.me/' + tel + '" target="_blank" rel="noopener"><button type="button">💬 WhatsApp</button></a>' : "") +
+        '<a href="profil.html?id=' + encodeURIComponent(pro.id) + '"><button type="button">👤 Profil</button></a>' +
+        '<button type="button" data-fav="' + echapper(pro.id) + '">' +
+          (estFav ? "💚 Favori" : "❤️ Favori") +
+        "</button>" +
+      "</div></div>";
+  }
+
+  function afficherListe(id, liste){
+    var zone = $(id);
+    if(!zone) return;
+    if(!liste.length){
+      zone.innerHTML =
+        '<div class="service-card"><h3>Aucun professionnel</h3>' +
+        '<p>Soyez le premier à publier en créant un compte pro.</p>' +
+        '<div class="card-actions"><a href="inscription.html"><button type="button">➕ Créer un compte</button></a></div></div>';
+      return;
+    }
+    zone.innerHTML = liste.map(carte).join("");
+  }
+
+  function stats(liste){
+    if($("nombreProfessionnels")) $("nombreProfessionnels").textContent = liste.length + "+";
+    if($("nombreVilles")){
+      var o={};
+      liste.forEach(function(p){
+        var v=String(p.ville||"").trim().toLowerCase();
+        if(v) o[v]=true;
+      });
+      $("nombreVilles").textContent = Object.keys(o).length + "+";
+    }
+  }
+
+  function categories(){
+    var zone = $("listeCategories");
+    if(!zone) return;
+    var cats = ["Artisan","Restaurant","Informatique","Mode","Santé","Transport"];
+    lirePros().forEach(function(p){
+      var n = String(p.categorie || "").trim();
+      if(n && cats.indexOf(n) === -1) cats.push(n);
+    });
+    zone.innerHTML = cats.slice(0,12).map(function(c){
+      return '<button type="button" data-cat="' + echapper(c) + '">' + echapper(c) + "</button>";
+    }).join("");
+  }
+
+  function filtrer(cat){
+    var ville = ($("ville") ? $("ville").value : "").toLowerCase().trim();
+    var recherche = ($("recherche") ? $("recherche").value : "").toLowerCase().trim();
+    if(cat) recherche = String(cat).toLowerCase();
+    return lirePros().filter(function(p){
+      var okVille = !ville || String(p.ville||"").toLowerCase().indexOf(ville) !== -1;
+      var texte = [p.nom,p.categorie,p.quartier,p.ville,p.description].join(" ").toLowerCase();
+      return okVille && (!recherche || texte.indexOf(recherche) !== -1);
+    });
+  }
+
+  function ouvrirResultats(titre, liste){
+    $("vueAccueil").style.display = "none";
+    $("vueResultats").style.display = "block";
+    $("titreResultats").textContent = titre || "Résultats";
+    $("infoResultats").textContent = liste.length + " professionnel(s)";
+    afficherListe("listeResultats", liste);
+    window.scrollTo(0,0);
+  }
+
+  function retourAccueil(ancre){
+    $("vueResultats").style.display = "none";
+    $("vueAccueil").style.display = "block";
+    if(ancre){
+      setTimeout(function(){
+        var el = document.querySelector(ancre);
+        if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+        else window.scrollTo(0,0);
+      }, 50);
+    } else {
+      window.scrollTo(0,0);
+    }
+  }
+
+  function brancher(){
+    if($("btnRecherche")){
+      $("btnRecherche").onclick = function(){
+        var mot = ($("recherche").value || "").trim() || "Recherche";
+        ouvrirResultats(mot, filtrer());
+      };
+    }
+
+    if($("recherche")){
+      $("recherche").addEventListener("keydown", function(e){
+        if(e.key === "Enter"){
+          e.preventDefault();
+          if($("btnRecherche")) $("btnRecherche").click();
+        }
+      });
+    }
+
+    if($("btnRetour")){
+      $("btnRetour").onclick = function(){ retourAccueil(); };
+    }
+
+    document.querySelectorAll('a[href="#accueil"], a[href="#categories"], a[href="#ajouter-service"], a[href="#contact"]').forEach(function(lien){
+      lien.addEventListener("click", function(e){
+        var href = lien.getAttribute("href") || "";
+        e.preventDefault();
+        retourAccueil(href);
+      });
+    });
+
+    if($("listeCategories")){
+      $("listeCategories").addEventListener("click", function(e){
+        var btn = e.target.closest("[data-cat]");
+        if(!btn) return;
+        var cat = btn.getAttribute("data-cat");
+        if($("recherche")) $("recherche").value = cat;
+        ouvrirResultats(cat, filtrer(cat));
+      });
+    }
+
+    document.body.addEventListener("click", function(e){
+      var btn = e.target.closest("[data-fav]");
+      if(!btn) return;
+      var id = String(btn.getAttribute("data-fav") || "");
+      if(!id) return;
+
+      var favs = [];
+      try {
+        favs = JSON.parse(localStorage.getItem("favoris") || "[]");
+        if(!Array.isArray(favs)) favs = [];
+      } catch(err) {
+        favs = [];
+      }
+
+      var i = favs.findIndex(function(x){ return String(x) === id; });
+      if(i >= 0){
+        favs.splice(i, 1);
+        btn.textContent = "❤️ Favori";
+      } else {
+        favs.push(id);
+        btn.textContent = "💚 Favori";
+      }
+      localStorage.setItem("favoris", JSON.stringify(favs));
+    });
+  }
+
+  function demarrer(){
+    if(demarre) return;
+    demarre = true;
+
+    var zone = $("listeServices");
+    if(zone){
+      zone.innerHTML = '<div class="service-card"><h3>Chargement...</h3><p>Lecture des professionnels en ligne...</p></div>';
+    }
+
+    chargerProsFirebase(function(){
+      var propres = lirePros();
+      stats(propres);
+      categories();
+      afficherListe("listeServices", propres);
+      brancher();
+      console.log("Index OK — pros:", propres.length);
+    });
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", function(){ setTimeout(demarrer, 300); });
+  }else{
+    setTimeout(demarrer, 300);
+  }
+  setTimeout(function(){ if(!demarre) demarrer(); }, 2000);
+})();
+</script>
+</body>
+            </html>
