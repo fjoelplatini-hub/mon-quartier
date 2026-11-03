@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes favoris - Mon Quartier Cameroun</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f7f5;color:#222}
+.container{width:92%;max-width:1100px;margin:0 auto}
+.header{background:#fff;border-bottom:1px solid #e5e5e5;padding:14px 0}
+.header .container{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.logo{font-weight:bold;color:#16513A;font-size:18px}
+nav a{margin-left:10px;text-decoration:none;color:#444;font-weight:600}
+nav a:hover{color:#16513A}
+.section{padding:28px 0}
+h1{margin:0 0 8px;color:#16513A;text-align:center}
+.intro{text-align:center;color:#666;margin:0 0 18px}
+.top-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.service-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.service-card:hover{box-shadow:0 8px 20px rgba(0,0,0,.10)}
+.service-card h3{margin:0 0 8px;color:#16513A}
+.service-card p{margin:0 0 6px;color:#555}
+.card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btn,button{border:0;background:#16513A;color:#fff;padding:12px 14px;border-radius:10px;font-weight:bold;cursor:pointer}
+.footer{background:#0f2f23;color:#fff;text-align:center;padding:20px 0;margin-top:20px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="container">
+    <div class="logo">🏘️ Mon Quartier Cameroun</div>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="favoris.html">Favoris</a>
+      <a href="index.html#ajouter-service">Ajouter</a>
+      <a href="connexion.html">Connexion</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="section">
+  <div class="container">
+    <h1>❤️ Mes favoris</h1>
+    <p class="intro">Vos professionnels enregistrés</p>
+    <div class="top-actions">
+      <a href="index.html"><button type="button" class="btn">🏠 Accueil</button></a>
+    </div>
+    <div class="grid" id="listeFavoris">
+      <div class="service-card"><h3>Chargement...</h3></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer"><div class="container">© 2026 Mon Quartier Cameroun</div></footer>
+
+<script src="js/core/database.js"></script>
+<script>
+(function(){
+  function echapper(t){return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+  function lirePros(){
+    try{
+      if(window.MQC_DATABASE&&Array.isArray(MQC_DATABASE.professionnels))return MQC_DATABASE.professionnels.filter(function(p){return p&&p.suspendu!==true;});
+      var l=JSON.parse(localStorage.getItem("professionnels")||"[]");return Array.isArray(l)?l.filter(function(p){return p&&p.suspendu!==true;}):[];
+    }catch(e){return [];}
+  }
+  function idsFav(){
+    try{
+      var l=JSON.parse(localStorage.getItem("favoris")||"[]");
+      if(!Array.isArray(l))return [];
+      return l.map(function(x){return x&&typeof x==="object"?String(x.id||""):String(x);}).filter(Boolean);
+    }catch(e){return [];}
+  }
+  function retirer(id){
+    localStorage.setItem("favoris",JSON.stringify(idsFav().filter(function(x){return String(x)!==String(id);})));
+  }
+  function carte(pro){
+    var tel=String(pro.whatsapp||pro.telephone||"").replace(/\D/g,"");
+    if(tel.length===9)tel="237"+tel;
+    return '<div class="service-card"><h3>'+echapper(pro.nom||"Professionnel")+'</h3>'+
+      '<p>💼 '+echapper(pro.categorie||"")+'</p>'+
+      '<p>📍 '+echapper(pro.quartier||"")+(pro.ville?", "+echapper(pro.ville):"")+'</p>'+
+      '<div class="card-actions">'+
+      (tel?'<a href="https://wa.me/'+tel+'" target="_blank"><button type="button">💬 WhatsApp</button></a>':'')+
+      '<a href="profil.html?id='+encodeURIComponent(pro.id)+'"><button type="button">👤 Profil</button></a>'+
+      '<button type="button" data-retirer="'+echapper(pro.id)+'">💔 Retirer</button></div></div>';
+  }
+  function afficher(){
+    var zone=document.getElementById("listeFavoris");if(!zone)return;
+    var ids=idsFav();
+    var pros=lirePros().filter(function(p){return ids.indexOf(String(p.id))!==-1;});
+    if(!pros.length){
+      zone.innerHTML='<div class="service-card"><h3>Aucun favori</h3><p>Ajoutez des professionnels depuis l’accueil.</p><div class="card-actions"><a href="index.html"><button type="button">🏠 Voir les services</button></a></div></div>';
+      return;
+    }
+    zone.innerHTML=pros.map(carte).join("");
+  }
+  document.addEventListener("DOMContentLoaded",function(){
+    afficher();
+    document.getElementById("listeFavoris").addEventListener("click",function(e){
+      var b=e.target.closest("[data-retirer]");if(!b)return;
+      retirer(b.getAttribute("data-retirer"));afficher();
+    });
+  });
+})();
+</script>
+</body>
+</html>
